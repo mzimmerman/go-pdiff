@@ -62,29 +62,34 @@ func init() {
 	miniprofiler.ShowControls = false
 }
 
+func serveError(w http.ResponseWriter, r *http.Request, err error) {
+	backend.Error(r, err)
+	http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
 func Main(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) {
 	if err := templates.ExecuteTemplate(w, "base.html", includes(p, r)); err != nil {
-		serveError(w, err)
+		serveError(w, r, err)
 	}
 }
 
 func CreateSite(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) {
 	s := strings.TrimSpace(r.FormValue("site"))
 	if len(s) == 0 {
-		backend.Error(r, errors.New("no site"))
+		serveError(w, r, errors.New("no site"))
 		return
 	}
 
 	site, err := backend.CreateSite(r, s)
 	if err != nil {
-		backend.Error(r, err)
+		serveError(w, r, err)
 		return
 	}
 
 	var ok bool
 	site.Key, site.Secret, ok = createKeySecret()
 	if !ok {
-		backend.Error(r, errors.New("couldn't create key"))
+		serveError(w, r, errors.New("couldn't create key"))
 		return
 	}
 	backend.AssignKey(r, s, site.Key, site.Secret)
@@ -120,41 +125,38 @@ func PostImage(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) 
 	post := Post{}
 	body, _ := ioutil.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &post); err != nil {
-		backend.Error(r, err)
+		serveError(w, r, err)
 		return
 	}
 
 	site, err := backend.GetSite(r, post.Site)
 	if err != nil {
-		backend.Error(r, err)
+		serveError(w, r, err)
 		return
 	}
 
 	sigin := fmt.Sprintf("%x\n%v\n%v\n%v\n%x", site.Key, site.Name, post.Group, post.Id, post.Image)
-	backend.Error(r, errors.New(fmt.Sprintf("signature: %s", sigin)))
 	h := hmac.New(sha256.New, site.Secret)
 	h.Write([]byte(sigin))
 	signature := fmt.Sprintf("%x", h.Sum(nil))
 
 	if !bytes.Equal(site.Key, post.Key) {
-		backend.Error(r, errors.New("go-pdiff: keys did not match"))
+		serveError(w, r, errors.New("go-pdiff: keys did not match"))
 		return
 	}
 	if signature != post.Signature {
-		backend.Error(r, errors.New("go-pdiff: signatures did not match"))
+		serveError(w, r, errors.New("go-pdiff: signatures did not match"))
 		return
 	}
 
-	im, format, err := image.Decode(bytes.NewBuffer(post.Image))
+	im, _, err := image.Decode(bytes.NewBuffer(post.Image))
 	if err != nil {
-		backend.Error(r, err)
+		serveError(w, r, err)
 		return
 	}
-
-	backend.Error(r, errors.New(format))
 
 	if err = backend.StoreImage(r, im, site.Name, post.Group, post.Id); err != nil {
-		backend.Error(r, err)
+		serveError(w, r, err)
 		return
 	}
 }

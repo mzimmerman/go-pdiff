@@ -24,10 +24,6 @@ import (
 	"net/http"
 )
 
-func serveError(w http.ResponseWriter, err error) {
-	http.Error(w, err.Error(), http.StatusInternalServerError)
-}
-
 type Includes struct {
 	Angular      string
 	BootstrapCss string
