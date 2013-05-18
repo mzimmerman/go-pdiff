@@ -34,6 +34,7 @@ type Backend interface {
 
 	GetSite(r *http.Request, site string) (*Site, error)
 	StoreImage(r *http.Request, i image.Image, site, group string, id int64) error
+	GetImageBefore(r *http.Request, site, group string, id int64) (int64, []byte, error)
 }
 
 type Site struct {

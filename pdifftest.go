@@ -24,22 +24,25 @@ func main() {
 	json.Unmarshal(body, &site)
 	fmt.Println(site)
 	imbytes, _ := ioutil.ReadFile("im.png")
-	p := Post{
-		Key:   site.Key,
-		Site:  site.Name,
-		Group: "group",
-		Id:    time.Now().UnixNano(),
-		Image: imbytes,
-	}
 
-	sigin := fmt.Sprintf("%x\n%v\n%v\n%v\n%x", site.Key, site.Name, p.Group, p.Id, p.Image)
-	h := hmac.New(sha256.New, site.Secret)
-	h.Write([]byte(sigin))
-	p.Signature = fmt.Sprintf("%x", h.Sum(nil))
-	j, _ := json.MarshalIndent(&p, "", "\t")
-	fmt.Println(string(j))
-	buf := bytes.NewBuffer(j)
-	resp, _ = http.Post("http://localhost:8080/post-image", "text/json", buf)
+	for i := 0; i < 2; i++ {
+		p := Post{
+			Key:   site.Key,
+			Site:  site.Name,
+			Group: "group",
+			Id:    time.Now().UnixNano(),
+			Image: imbytes,
+		}
+
+		sigin := fmt.Sprintf("%x\n%v\n%v\n%v\n%x", site.Key, site.Name, p.Group, p.Id, p.Image)
+		h := hmac.New(sha256.New, site.Secret)
+		h.Write([]byte(sigin))
+		p.Signature = fmt.Sprintf("%x", h.Sum(nil))
+		j, _ := json.MarshalIndent(&p, "", "\t")
+		fmt.Println(string(j))
+		buf := bytes.NewBuffer(j)
+		resp, _ = http.Post("http://localhost:8080/post-image", "text/json", buf)
+	}
 }
 
 type Post struct {

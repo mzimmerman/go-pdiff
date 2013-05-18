@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"github.com/MiniProfiler/go/miniprofiler"
 	"github.com/gorilla/mux"
+	"github.com/mjibson/pdiff"
 	"html/template"
 	"image"
 	_ "image/gif"
@@ -159,6 +160,19 @@ func PostImage(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) 
 		serveError(w, r, err)
 		return
 	}
+	pid, pbytes, err := backend.GetImageBefore(r, site.Name, post.Group, post.Id)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+	backend.Error(r, errors.New(fmt.Sprintf("this, prev: %v, %v", post.Id, pid)))
+
+	isDiff, diffim, diffpx, err := pdiff.Pdiff(bytes.NewBuffer(post.Image), bytes.NewBuffer(pbytes))
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+	_, _, _ = isDiff, diffim, diffpx
 }
 
 type Post struct {

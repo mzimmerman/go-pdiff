@@ -22,6 +22,7 @@ import (
 	"appengine/datastore"
 	"image"
 	"image/png"
+	"io/ioutil"
 	"net/http"
 
 	_ "github.com/MiniProfiler/go/miniprofiler_gae"
@@ -111,6 +112,30 @@ func (a AppEngineBackend) StoreImage(r *http.Request, i image.Image, name, group
 	}
 	im.Blob = bk
 	return gn.PutMany(im, aegroup)
+}
+
+func (a AppEngineBackend) GetImageBefore(r *http.Request, name, group string, id int64) (int64, []byte, error) {
+	gn := goon.NewGoon(r)
+	c := appengine.NewContext(r)
+	site := &AESite{Id: name}
+	aegroup := &AEGroup{Id: group, Site: gn.Key(site)}
+	q := datastore.NewQuery(gn.Key(&AEImage{}).Kind()).KeysOnly()
+	q = q.Ancestor(gn.Key(aegroup))
+	q = q.Order("-__key__")
+	keys, err := gn.GetAll(q.Offset(1).Limit(1), nil)
+	if err != nil || len(keys) != 1 {
+		return 0, nil, err
+	}
+	i := AEImage{
+		Id:    keys[0].IntID(),
+		Group: keys[0].Parent(),
+	}
+	if err := gn.Get(&i); err != nil {
+		return 0, nil, err
+	}
+	br := blobstore.NewReader(c, i.Blob)
+	ib, err := ioutil.ReadAll(br)
+	return i.Id, ib, err
 }
 
 type AESite struct {
