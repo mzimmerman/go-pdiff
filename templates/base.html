@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" ng-app>
+<head>
+	<link href="{{.BootstrapCss}}" rel="stylesheet">
+	<style>
+		.ng-cloak {
+			display: none;
+		}
+	</style>
+</head>
+<body
+	ng-controller="PdiffCtrl"
+	class="ng-cloak"
+	data-create="{{ url "create-site"}}"
+>
+	<div class="navbar navbar-inverse">
+		<div class="navbar-inner">
+			<a class="brand" href="{{ url "main" }}">pdiff</a>
+			<ul class="nav">
+			</ul>
+		</div>
+	</div>
+	<div class="container-fluid">
+		<div class="row">
+			<div ng-show="view == 'create'">
+				<input type="text" ng-model="create_name">
+				<button ng-click="create()">create site</button>
+			</div>
+		</div>
+		<div class="row">
+			Site: <div ng-bind="site"></div>
+			Key: <div ng-bind="key"></div>
+			Secret: <div ng-bind="secret"></div>
+		</div>
+	</div>
+
+	<script src="{{.Jquery}}"></script>
+	<script src="{{.BootstrapJs}}"></script>
+	<script src="/static/js/site.js"></script>
+	<script src="{{.Angular}}"></script>
+
+	{{.MiniProfiler}}
+</body>
+</html>
