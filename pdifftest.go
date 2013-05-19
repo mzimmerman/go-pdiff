@@ -23,9 +23,9 @@ func main() {
 	body, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(body, &site)
 	fmt.Println(site)
-	imbytes, _ := ioutil.ReadFile("im.png")
 
-	for i := 0; i < 2; i++ {
+	submit := func(fname string) {
+		imbytes, _ := ioutil.ReadFile(fname)
 		p := Post{
 			Key:   site.Key,
 			Site:  site.Name,
@@ -43,6 +43,10 @@ func main() {
 		buf := bytes.NewBuffer(j)
 		resp, _ = http.Post("http://localhost:8080/post-image", "text/json", buf)
 	}
+
+	submit("im.png")
+	submit("im.png")
+	submit("im1.png")
 }
 
 type Post struct {

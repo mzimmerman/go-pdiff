@@ -20,6 +20,7 @@ import (
 	"appengine"
 	"appengine/blobstore"
 	"appengine/datastore"
+	"fmt"
 	"image"
 	"image/png"
 	"io/ioutil"
@@ -138,6 +139,38 @@ func (a AppEngineBackend) GetImageBefore(r *http.Request, name, group string, id
 	return i.Id, ib, err
 }
 
+func (a AppEngineBackend) StoreDiffImage(r *http.Request, i image.Image, name, group string, id1, id2 int64, diffpx int) error {
+	gn := goon.NewGoon(r)
+	c := appengine.NewContext(r)
+	site := &AESite{Id: name}
+	aegroup := &AEGroup{Id: group, Site: gn.Key(site)}
+	aedi := &AEDiffImage{
+		Id:     fmt.Sprintf("%v,%v", id1, id2),
+		Group:  gn.Key(aegroup),
+		Id1:    id1,
+		Id2:    id2,
+		Pixels: diffpx,
+	}
+
+	if i != nil {
+		w, err := blobstore.Create(c, "image/png")
+		if err != nil {
+			return err
+		}
+		png.Encode(w, i)
+		if err = w.Close(); err != nil {
+			return err
+		}
+		bk, err := w.Key()
+		if err != nil {
+			return err
+		}
+		aedi.Blob = bk
+	}
+
+	return gn.Put(aedi)
+}
+
 type AESite struct {
 	_kind  string `goon:"kind,S"`
 	Id     string `datastore:"-" goon:"id"`
@@ -155,11 +188,13 @@ type AEImage struct {
 }
 
 type AEDiffImage struct {
-	_kind    string            `goon:"kind,D"`
-	Id       int64             `datastore:"-" goon:"id"`
-	Group    *datastore.Key    `datastore:"-" goon:"parent"`
-	Reviewed bool              `datastore:"-"`
-	Pixels   int64             `datastore:"p,noindex"`
+	_kind    string         `goon:"kind,D"`
+	Id       string         `datastore:"-" goon:"id"`
+	Group    *datastore.Key `datastore:"-" goon:"parent"`
+	Id1      int64
+	Id2      int64
+	Reviewed bool              `datastore:"r"`
+	Pixels   int               `datastore:"p,noindex"`
 	Blob     appengine.BlobKey `datastore:"b,noindex"`
 }
 

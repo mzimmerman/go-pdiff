@@ -20,7 +20,6 @@ import (
 	"errors"
 	"image"
 	"net/http"
-	"net/url"
 )
 
 type Backend interface {
@@ -35,17 +34,12 @@ type Backend interface {
 	GetSite(r *http.Request, site string) (*Site, error)
 	StoreImage(r *http.Request, i image.Image, site, group string, id int64) error
 	GetImageBefore(r *http.Request, site, group string, id int64) (int64, []byte, error)
+	StoreDiffImage(r *http.Request, i image.Image, site, group string, id1, id2 int64, diffpx int) error
 }
 
 type Site struct {
 	Name        string
 	Key, Secret []byte
-}
-
-type DiffImage struct {
-	Pixels              int
-	Diff, Before, After url.URL
-	Site, Group         string
 }
 
 var (

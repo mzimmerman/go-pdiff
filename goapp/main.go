@@ -167,12 +167,15 @@ func PostImage(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) 
 	}
 	backend.Error(r, errors.New(fmt.Sprintf("this, prev: %v, %v", post.Id, pid)))
 
-	isDiff, diffim, diffpx, err := pdiff.Pdiff(bytes.NewBuffer(post.Image), bytes.NewBuffer(pbytes))
-	if err != nil {
+	if isDiff, diffim, diffpx, err := pdiff.Pdiff(bytes.NewBuffer(post.Image), bytes.NewBuffer(pbytes)); err != nil {
 		serveError(w, r, err)
 		return
+	} else if isDiff {
+		if derr := backend.StoreDiffImage(r, diffim, site.Name, post.Group, pid, post.Id, diffpx); derr != nil {
+			serveError(w, r, derr)
+			return
+		}
 	}
-	_, _, _ = isDiff, diffim, diffpx
 }
 
 type Post struct {
