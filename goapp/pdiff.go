@@ -35,11 +35,19 @@ type Backend interface {
 	StoreImage(r *http.Request, i image.Image, site, group string, id int64) error
 	GetImageBefore(r *http.Request, site, group string, id int64) (int64, []byte, error)
 	StoreDiffImage(r *http.Request, i image.Image, site, group string, id1, id2 int64, diffpx int) error
+	GetUnreviewedImages(r *http.Request, site string) []DiffImage
 }
 
 type Site struct {
 	Name        string
 	Key, Secret []byte
+}
+
+type DiffImage struct {
+	Group  string
+	Id1    int64
+	Id2    int64
+	Pixels int
 }
 
 var (

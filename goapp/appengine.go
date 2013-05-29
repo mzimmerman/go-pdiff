@@ -171,6 +171,31 @@ func (a AppEngineBackend) StoreDiffImage(r *http.Request, i image.Image, name, g
 	return gn.Put(aedi)
 }
 
+func (a AppEngineBackend) GetUnreviewedImages(r *http.Request, name string) []DiffImage {
+	gn := goon.NewGoon(r)
+	site := &AESite{Id: name}
+	if err := gn.Get(site); err != nil {
+		return nil
+	}
+
+	q := datastore.NewQuery(gn.Key(&AEDiffImage{}).Kind())
+	q = q.Ancestor(gn.Key(site))
+	q = q.Filter("r", false)
+	q = q.KeysOnly()
+	var aedis []*AEDiffImage
+	gn.GetAll(q, &aedis)
+	dis := make([]DiffImage, len(aedis))
+	for i, v := range aedis {
+		dis[i] = DiffImage{
+			Group:  v.Group.StringID(),
+			Id1:    v.Id1,
+			Id2:    v.Id2,
+			Pixels: v.Pixels,
+		}
+	}
+	return dis
+}
+
 type AESite struct {
 	_kind  string `goon:"kind,S"`
 	Id     string `datastore:"-" goon:"id"`
