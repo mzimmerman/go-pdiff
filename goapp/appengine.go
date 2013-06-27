@@ -49,7 +49,8 @@ func (a *AppEngineBackend) CreateSite(r *http.Request, name string) (*Site, erro
 		if err := gn.Get(&site); err != datastore.ErrNoSuchEntity {
 			return ErrSiteExists
 		}
-		return gn.Put(&site)
+		_, err := gn.Put(&site)
+		return err
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -68,7 +69,8 @@ func (a *AppEngineBackend) AssignKey(r *http.Request, name string, key, secret [
 		}
 		site.Key = key
 		site.Secret = secret
-		return gn.Put(&site)
+		_, err := gn.Put(&site)
+		return err
 	}, nil)
 }
 
@@ -112,7 +114,8 @@ func (a AppEngineBackend) StoreImage(r *http.Request, i image.Image, name, group
 		return err
 	}
 	im.Blob = bk
-	return gn.PutMany(im, aegroup)
+	_, err = gn.PutMany(im, aegroup)
+	return err
 }
 
 func (a AppEngineBackend) GetImageBefore(r *http.Request, name, group string, id int64) (int64, []byte, error) {
@@ -167,8 +170,8 @@ func (a AppEngineBackend) StoreDiffImage(r *http.Request, i image.Image, name, g
 		}
 		aedi.Blob = bk
 	}
-
-	return gn.Put(aedi)
+	_, err := gn.Put(aedi)
+	return err
 }
 
 func (a AppEngineBackend) GetUnreviewedImages(r *http.Request, name string) []DiffImage {
