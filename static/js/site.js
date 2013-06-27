@@ -17,5 +17,6 @@ function PdiffCtrl($scope, $http) {
 				$scope.key = data.Key;
 				$scope.secret = data.Secret;
 				$scope.site = data.Name;
+		});
 	};
 }
